@@ -6,8 +6,9 @@
   "license": "MIT",
   "main": "bin/rerunner.js",
   "bin": {
-    "rerunner": "./bin/rerunner.js"
+    "rerunner": "./bin/rerunner.mjs"
   },
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CodeBishop/rerunner.git"
