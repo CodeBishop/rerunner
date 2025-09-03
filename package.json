@@ -1,12 +1,20 @@
 {
   "name": "rerunner",
-  "description": "Re-install Runner, an installation manager",
+  "description": "Re-install Runner, an installation manager for Electron apps",
   "author": "Scott Bishop",
   "version": "0.7.0",
   "license": "MIT",
   "main": "bin/rerunner.js",
   "bin": {
     "rerunner": "./bin/rerunner.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodeBishop/rerunner.git"
+  },
+  "homepage": "https://github.com/CodeBishop/rerunner",
+  "bugs": {
+    "url": "https://github.com/CodeBishop/rerunner/issues"
   },
   "keywords": [
     "electron",
