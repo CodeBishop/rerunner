@@ -1,0 +1,25 @@
+{
+  "name": "rerunner",
+  "description": "Re-install Runner, an installation manager",
+  "author": "Scott Bishop",
+  "version": "0.7.0",
+  "license": "MIT",
+  "main": "bin/rerunner.js",
+  "bin": {
+    "rerunner": "./bin/rerunner.js"
+  },
+  "keywords": [
+    "electron",
+    "development",
+    "reinstall",
+    "installer",
+    "electron-builder",
+    "cli"
+  ],
+  "dependencies": {
+    "blessed": "^0.1.81"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
