@@ -322,7 +322,7 @@ async function main() {
       // Run rebuild if needed
       if (runRebuild) {
         console.log('Running yarn rebuild...');
-        await runYarnCommand('rebuild');
+        await runYarnCommand('dev-rebuild');
         console.log('✓ Build complete\n');
       }
 
