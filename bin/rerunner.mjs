@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import blessed from 'blessed';
-import { exec, spawn } from 'child_process';
+import { exec, spawn, execFile } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
@@ -216,6 +216,34 @@ function runYarnCommand(command) {
   });
 }
 
+async function runApp(appName) {
+  const appPath = `/Applications/${appName}.app`;
+  const executablePath = `${appPath}/Contents/MacOS/${appName}`;
+  
+  // Check if app is installed
+  try {
+    await fs.access(appPath);
+  } catch (error) {
+    throw new Error(`${appName}.app not found in Applications folder`);
+  }
+  
+  // Check if executable exists
+  try {
+    await fs.access(executablePath);
+  } catch (error) {
+    throw new Error(`Executable not found at ${executablePath}`);
+  }
+  
+  // Run the app (equivalent to bash exec)
+  const proc = spawn(executablePath, [], { 
+    stdio: 'inherit'
+  });
+  
+  proc.on('close', (code) => {
+    process.exit(code || 0);
+  });
+}
+
 async function promptForInput(question) {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -425,7 +453,7 @@ async function main() {
       // Run app if requested
       if (runAfterInstall) {
         console.log('Running app...');
-        await runYarnCommand('app');
+        await runApp(appName);
       }
 
       console.log('Reinstall complete!');
