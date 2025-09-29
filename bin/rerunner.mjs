@@ -259,6 +259,13 @@ async function promptForInput(question) {
 }
 
 async function initConfig() {
+  // Check if config already exists
+  const existingConfigPath = findConfigFile();
+  if (existingConfigPath) {
+    console.log(`Rerunner configuration file already exists at:\n${existingConfigPath}`);
+    process.exit(0);
+  }
+
   console.log('Creating .rerunner.json configuration file...\n');
   
   const appName = await promptForInput('Enter the app name: ');
