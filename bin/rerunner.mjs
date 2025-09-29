@@ -7,11 +7,16 @@ import fs from 'fs/promises';
 import path from 'path';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import readline from 'readline';
 
 const execAsync = promisify(exec);
 const repoRoot = process.cwd();
-const EB_CONFIG_FILE_PATH = 'build/electron-builder.json';
-const configPath = resolve(repoRoot, EB_CONFIG_FILE_PATH);
+const CONFIG_FILENAME = '.rerunner.json';
+const CONFIG_SEARCH_PATHS = [
+  repoRoot,
+  resolve(repoRoot, 'build'),
+  resolve(repoRoot, 'config')
+];
 
 // Check if this is macOS
 if (process.platform !== 'darwin') {
@@ -19,7 +24,26 @@ if (process.platform !== 'darwin') {
   process.exit(1);
 }
 
+function findConfigFile() {
+  for (const searchPath of CONFIG_SEARCH_PATHS) {
+    const configPath = resolve(searchPath, CONFIG_FILENAME);
+    try {
+      readFileSync(configPath, 'utf8');
+      return configPath;
+    } catch {
+      // Continue searching
+    }
+  }
+  return null;
+}
+
 function getAppName() {
+  const configPath = findConfigFile();
+  if (!configPath) {
+    const scriptName = path.basename(process.argv[1]);
+    throw new Error(`Config file ${CONFIG_FILENAME} not found. Run '${scriptName} init' to create one.`);
+  }
+
   let cfg;
   try {
     const raw = readFileSync(configPath, 'utf8');
@@ -28,9 +52,9 @@ function getAppName() {
     throw new Error(`get-app-name: failed to load ${configPath}:\n${e.message}`);
   }
 
-  const name = cfg?.extraMetadata?.name;
+  const name = cfg?.appName;
   if (typeof name !== 'string' || name.trim() === '') {
-    throw new Error(`get-app-name: extraMetadata.name missing or empty in ${configPath}`);
+    throw new Error(`get-app-name: appName missing or empty in ${configPath}`);
   }
   return name;
 }
@@ -192,7 +216,52 @@ function runYarnCommand(command) {
   });
 }
 
+async function promptForInput(question) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise(resolve => {
+    rl.question(question, answer => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
+async function initConfig() {
+  console.log('Creating .rerunner.json configuration file...\n');
+  
+  const appName = await promptForInput('Enter the app name: ');
+  
+  if (!appName) {
+    console.error('App name is required');
+    process.exit(1);
+  }
+
+  const config = {
+    appName: appName
+  };
+
+  const configPath = resolve(repoRoot, CONFIG_FILENAME);
+  
+  try {
+    await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+    console.log(`✓ Created ${configPath}`);
+    console.log(`App name: ${appName}`);
+  } catch (error) {
+    console.error(`Failed to create config file: ${error.message}`);
+    process.exit(1);
+  }
+}
+
 async function main() {
+  // Handle init command
+  if (process.argv[2] === 'init') {
+    await initConfig();
+    return;
+  }
   let appName;
   let installerPath;
   let installerExists = false;
@@ -209,7 +278,15 @@ async function main() {
     appRunning = await isAppRunning(appName);
     appInstalled = await isAppInstalled(appName);
   } catch (error) {
-    console.error('Error during initialization:', error.message);
+    if (error.message.includes('Config file .rerunner.json not found')) {
+      console.log('.rerunner.json config file not found, use init to create one.');
+      console.log('Run: rerunner init');
+      console.log('  OR');
+      console.log('Run: npx rerunner init');
+      process.exit(0);
+    } else {
+      console.error('Error during initialization:', error.message);
+    }
     process.exit(1);
   }
 
